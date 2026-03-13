@@ -1,3 +1,18 @@
+let board
+let boardWidth = 360
+let boardHeight = 640
+let context
+
+window.onload = function() {
+    board = document.getElementById("board")
+    board.height = boardHeight
+    board.width = boardWidth
+    context = board.getContext("2d") // used for drawing on the board
+    
+}
+
+
+/*
 var contexto = document.getElementById("lienzoJuego").getContext("2d")
 contexto.canvas.width = 300
 contexto.canvas.height = 700
@@ -24,4 +39,4 @@ function loop() {
     personaje.y += gravedad
 }
 
-window.addEventListener("keydown", keyDown)
+window.addEventListener("keydown", keyDown)*/
