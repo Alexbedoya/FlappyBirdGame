@@ -3,40 +3,163 @@ let boardWidth = 360
 let boardHeight = 640
 let context
 
+//bird
+let birdWidth = 34 // widht/heigh ratio = 408/228
+let birdHeigh = 24
+
+let birdX = boardWidth/8
+let birdY = boardHeight/2
+let birdImg
+
+let bird = {
+    x: birdX,
+    y: birdY,
+    width: birdWidth,
+    height: birdHeigh
+}
+
+let pipeArray = []
+let pipeWidth = 64 // width/height ratio = 384/3072 = 1/8
+let pipeHeight = 512
+let pipeX = boardWidth
+let pipeY = 0
+
+let topPipeImg
+let bottomPipeImg
+
+//physics
+let velocityX = -2 //pipes moving left speed
+let velocityY = 0 //bird jump speed
+let gravity = 0.4
+
+let gameOver = false
+
+let score = 0
+
 window.onload = function() {
     board = document.getElementById("board")
     board.height = boardHeight
     board.width = boardWidth
     context = board.getContext("2d") // used for drawing on the board
+
+    //load Img
+    birdImg = new Image()
+    birdImg.src = "./img/flappybird.png"
+    birdImg.onload = function () {
+        context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height)
+    }
+
+    //top pipe
+    topPipeImg = new Image()
+    topPipeImg.src = "./img/toppipe.png"
+
+    bottomPipeImg = new Image()
+    bottomPipeImg.src = "./img/bottompipe.png"
+
+    requestAnimationFrame(update)
+    setInterval(placePipe, 1500) //every 1.5 seg
+
+    document.addEventListener("keydown", moveBird)
     
 }
 
+function update() {
+    requestAnimationFrame(update)
 
-/*
-var contexto = document.getElementById("lienzoJuego").getContext("2d")
-contexto.canvas.width = 300
-contexto.canvas.height = 700
-var FPS = 60
-var gravedad = 1.5
-var personaje = {
-    x:100,
-    y:150,
-    w:50,
-    h:50
+    if(gameOver){
+        return
+    }
+
+    context.clearRect(0, 0, board.width, board.height)
+
+    //bird
+    velocityY += gravity
+    bird.y = Math.max(bird.y + velocityY, 0)
+    context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height)
+
+    if (bird.y > board.height){
+        gameOver = true
+    }
+    //pipe
+    for (let i = 0; i < pipeArray.length; i++){ 
+        let pipe = pipeArray[i]
+        pipe.x += velocityX
+        context.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height)
+
+        if(!pipe.passed && bird.x > pipe.x + pipe.width) {
+            score += 0.5
+            pipe.passed = true
+        }
+
+        if (detectCollision(bird, pipe)) {
+            gameOver = true
+        }
+    }
+
+    //clear pipes
+    while (pipeArray.length > 0 && pipeArray[0].x < -pipeWidth){
+        pipeArray.shift() // removes first element from the array
+
+    }
+
+    //score
+    context.fillStyle = "white"
+    context.font = "45px sans-serif"
+    context.fillText(score, 5, 45)
+
+    if (gameOver) {
+        context.fillText("GAME OVER", 15, boardHeight/2)
+    }
 }
 
-//CONTROL
-function keyDown(){
-    personaje.y -=25
+function placePipe() {
+
+    if (gameOver){
+        return
+    }
+
+    let randomPipeY = pipeY - pipeHeight/4 - Math.random()*(pipeHeight/2)
+    
+    let openingSpace = boardHeight/4
+
+    let topPipe = {
+        img: topPipeImg,
+        x: pipeX,
+        y: randomPipeY,
+        width: pipeWidth,
+        height: pipeHeight,
+        passed: false
+    }
+
+    pipeArray.push(topPipe)
+
+    let bottomPipe = {
+        img: bottomPipeImg,
+        x: pipeX,
+        y: randomPipeY + pipeHeight + openingSpace,
+        width: pipeWidth,
+        height: pipeHeight,
+        passed: false
+    }
+
+    pipeArray.push(bottomPipe)
 }
 
-setInterval(loop,1000/FPS)
-function loop() {
-    contexto.clearRect(0,0,300,700)
-    contexto.fillStyle = "rgba(100,0,0,1)"
-    contexto.fillRect(personaje.x,personaje.y,personaje.w,personaje.h)
+function moveBird(e) {
+    if (e.code == "Space" || e.code == "ArrowUp" || e.code == "keyX") {
+        //jump
+        velocityY = -6
+    }
 
-    personaje.y += gravedad
+    //reset game
+    if (gameOver) {
+        bird.y = birdY
+        pipeArray = []
+        score = 0
+        gameOver = false
+    }
 }
 
-window.addEventListener("keydown", keyDown)*/
+function detectCollision(a, b) {
+    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
